@@ -1,15 +1,11 @@
 @echo off
-
-:: 基础初始化准备
 cd /d "%~dp0"
 cls
 
 call :info 请稍后,初始化中...
-
-set titl=任渊生存
-title %titl%
-
 set line=----------------------------------
+set titl=任渊生存
+title %titl% 初始化中...
 
 :: 初始化彩色字体
 setlocal EnableDelayedExpansion
@@ -18,9 +14,42 @@ for /f "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1)
 call :VersionReader
 call :ConfigReader
 call :DisplayConfig
-set startup-parameter=%java-path% -Xmx%default-xmx%M -Xms%default-xms%M %extra-java% -jar %core% %extra-server%
-pause >nul
-goto exit
+call :EulaChecker
+call :PortChecker
+
+set startup-command=
+set /a times=0
+if "%port-titl%" equ "true" set titl-port=端口: %server-port%
+
+:Loop
+call :RefreshMemory
+cls
+call :RefreshTitle
+
+%java-path% -Xmx%xmx%M -Xms%xms%M %extra-java% -jar %core% %extra-server%
+
+echo.
+call :Info %line%
+call :Info 服务端已经关闭
+
+if "%auto-restart%" neq "true" (
+    call :Info 将在3秒后关闭窗口
+    ping -n 4 -w 500 127.0.0.1 >nul 
+    goto exit
+)
+
+for /l %%a in (%restart-wait%,-1,1) do (
+    call :Info 服务端将在%%a秒后重启
+    ping -n 2 -w 500 0.0.0.1>nul
+)
+
+call :Info 服务端重启中
+set /a times+=1
+
+
+goto Loop
+
+
 
 
 
@@ -47,10 +76,6 @@ goto exit
 
 
 
-
-
-
-
 :: 控制台输出方法
 :Info
 echo [Info] %*
@@ -58,8 +83,8 @@ goto exit
 
 
 
-:Warning
-call :colortext 0e "[Warning] %~1" & echo.
+:Warn
+call :colortext 0e "[Warn] %~1" & echo.
 goto exit
 
 
@@ -83,12 +108,15 @@ goto exit
 :PropertiesReader
 if "%~3" equ "-keepspace" (set space=true) && if "%~4" equ "-keepspace" (set space=true)
 if "%~3" equ "-disablewarn" (set warn=false) && if "%~4" equ "-disablewarn" set (warn=false)
-if not exist %~1 ( if "%warn%" neq "false" call :Warning "未检测到文件 %~1 ！" ) & goto exit
+if not exist %~1 ( if "%warn%" neq "false" call :Warn "未检测到文件 %~1 ！" ) & goto exit
 for /f "tokens=1,* delims==" %%a in ('findstr "%~2=" "%~1"') do set tag=%%b
-if "%tag%" equ "" ( if "%warn%" neq "false" call :Warning "无法获取到 %~1 的 %~2 参数！" ) & goto exit
+if "%tag%" equ "" ( if "%warn%" neq "false" call :Warn "无法获取到 %~1 的 %~2 参数！" ) & goto exit
 if "%space%" neq "true" set tag=%tag: =%
 set %~2=%tag%
+:: 释放变量
 set tag=
+set warn=
+set space=
 goto exit
 
 
@@ -146,9 +174,9 @@ goto exit
 
 :: 旧版配置文件转换
 :ConfigTranslator
-if not exist config.properties call :Warning 未找到正确的旧配置文件 && goto ConfigCreater
+if not exist config.properties call :Warn 未找到正确的旧配置文件 && goto ConfigCreater
 call :info 正在转换旧版配置文件
-if exist launcher.properties call :Warning 检测到launcher.properties已存在，将覆盖原配置文件，按任意键以继续 && pause >nul
+if exist launcher.properties call :Warn 检测到launcher.properties已存在，将覆盖原配置文件，按任意键以继续 && pause >nul
 
 :: 由于现在不会在开服前等待,将忽略EarlyLunchWait
 :: ServerGUI将转换为extra-server直接添加-nogui参数
@@ -246,9 +274,92 @@ call :Info 服务器参数: %extra-server%
 call :Info JVM参数: %extra-java%
 call :Info Java路径: %java-path%
 call :Info %line%
+goto exit
+
+
+
+:: Eula检查
+:EulaChecker
+call :PropertiesReader eula.txt eula -disablewarn
+if "%eula%" equ "true" goto exit
+
+call :Warn "在服务端正式运行前，你还要同意Minecraft EULA"
+call :Info 查看EULA请前往 https://account.mojang.com/documents/minecraft_eula
+call :Info 在此处按任意键表示同意Minecraft EULA并启动服务端
+
+pause>nul
+echo eula=true>eula.txt
+call :Info 你同意了Minecraft EULA,服务端即将启动
+call :Info %line%
+ping -n 2 -w 500 0.0.0.1>nul
 
 goto exit
 
+
+:: 端口检查
+:PortChecker
+call :PropertiesReader server.properties server-port -disablewarn
+if "%server-port%" equ "" (
+    set port-titl=false
+    goto exit
+)
+
+:: 查找占用端口的程序
+set /a times=0 
+for /f "tokens=2,5" %%i in (' netstat -ano ^| findstr "%server-port%" ') do (
+    for /f %%a in ('echo %%i ^| findstr "%server-port%"') do ( 
+        if "!times!" equ "0" (
+            call :Warn 服务器端口可能被占用，将会导致服务器无法正常开启！
+            call :Info 以下是占用端口的进程PID和对应端口IP:
+        )
+        call :Info 进程PID: %%j ,占用端口IP: %%a
+        set /a times+=1
+    )
+)
+if "%times%" neq "0" (
+    call :Info 将在5秒后继续启动服务器
+    call :Info %line% 
+    ping -n 6 -w 500 127.0.0.1 >nul 
+)
+set times=
+goto exit
+
+:: 刷新标题
+:RefreshTitle
+if "%auto-restart%" equ "true" (
+    title %titl% %name% 重启次数: %times% %titl-port%
+) else (
+    title %titl% %name% %titl-port%
+)
+goto exit
+
+:: 刷新内存分配
+:RefreshMemory
+if "%auto-memory%" neq "true" (
+    set xmx=%default-xmx%
+    set xms=%default-xms%
+    goto exit
+)
+
+for /f "delims=" %%a in ('wmic os get TotalVisibleMemorySize /value^|find "="') do set %%a
+set /a t1=%TotalVisibleMemorySize%,t2=1024
+set /a ram=%t1%/%t2%
+for /f "delims=" %%b in ('wmic os get FreePhysicalMemory /value^|find "="') do set %%b
+set /a t3=%FreePhysicalMemory%
+set /a freeram=%t3%/%t2%
+call :Info 系统最大内存为：%ram% MB，剩余可用内存为：%freeram% MB
+
+set /a xmx=%freeram%-728
+if %xmx% lss 1024 (
+    call :Warn 剩余可用内存可能不足以开启服务端或者开启后卡顿
+    set xmx=1024
+) else if %xmx% gtr 20480 set xmx=20480
+set xms=%xmx%
+call :Info 本次将分配 %xmx% MB内存
+call :Info %line%
+ping -n 2 -w 500 127.0.0.1 >nul 
+
+goto exit
 
 :: 退出标识,请不要在此下方添加代码
 :exit
