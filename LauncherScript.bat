@@ -135,7 +135,7 @@ call :PropertiesReader progress.properties ConfigSet -disablewarn
 if "%ConfigSet%" equ "true" goto :ConfigTranslator
 
 :: 检测默认配置文件
-if not exist launcher.properties goto :ConfigCreater
+if not exist launcher.properties call :ConfigCreater
 
 :: 读取配置文件
 call :Info 读取配置文件中
