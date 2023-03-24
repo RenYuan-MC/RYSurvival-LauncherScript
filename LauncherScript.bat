@@ -46,6 +46,7 @@ for /l %%a in (%restart-wait%,-1,1) do (
 call :Info 服务端重启中
 set /a times+=1
 
+call :Info %line%
 
 goto Loop
 
