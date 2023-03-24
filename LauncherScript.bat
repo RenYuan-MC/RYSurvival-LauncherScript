@@ -1,0 +1,254 @@
+@echo off
+
+:: 基础初始化准备
+cd /d "%~dp0"
+cls
+
+call :info 请稍后,初始化中...
+
+set titl=任渊生存
+title %titl%
+
+set line=----------------------------------
+
+:: 初始化彩色字体
+setlocal EnableDelayedExpansion
+for /f "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set "DEL=%%a"
+
+call :VersionReader
+call :ConfigReader
+call :DisplayConfig
+set startup-parameter=%java-path% -Xmx%default-xmx%M -Xms%default-xms%M %extra-java% -jar %core% %extra-server%
+pause >nul
+goto exit
+
+
+
+
+
+
+
+
+
+
+:: 读取服务端版本信息
+:VersionReader
+if not exist version.properties (
+    call :Error 版本文件丢失，将使用默认的核心名称server.jar 
+    set core=server.jar
+    goto exit
+)
+call :PropertiesReader version.properties version
+call :PropertiesReader version.properties core -disablewarn
+call :PropertiesReader version.properties name
+call :PropertiesReader version.properties git
+if "%core%" equ "" call :Error 核心名称参数丢失，将使用默认的核心名称server.jar & set core=server.jar
+goto exit
+
+
+
+
+
+
+
+:: 控制台输出方法
+:Info
+echo [Info] %*
+goto exit
+
+
+
+:Warning
+call :colortext 0e "[Warning] %~1" & echo.
+goto exit
+
+
+
+:Error
+call :colortext 0c "[Error] %~1" & echo.
+goto exit
+
+
+
+:: 输出彩色字体
+:ColorText
+<nul set /p ".=%DEL%" > "%~2"
+findstr /v /a:%1 /R "^$" "%~2" nul
+del "%~2" > nul 2>&1
+goto exit
+
+
+
+:: properties文件读取
+:PropertiesReader
+if "%~3" equ "-keepspace" (set space=true) && if "%~4" equ "-keepspace" (set space=true)
+if "%~3" equ "-disablewarn" (set warn=false) && if "%~4" equ "-disablewarn" set (warn=false)
+if not exist %~1 ( if "%warn%" neq "false" call :Warning "未检测到文件 %~1 ！" ) & goto exit
+for /f "tokens=1,* delims==" %%a in ('findstr "%~2=" "%~1"') do set tag=%%b
+if "%tag%" equ "" ( if "%warn%" neq "false" call :Warning "无法获取到 %~1 的 %~2 参数！" ) & goto exit
+if "%space%" neq "true" set tag=%tag: =%
+set %~2=%tag%
+set tag=
+goto exit
+
+
+
+:: 配置文件读取
+:ConfigReader
+call :Info 正在初始化配置文件系统
+
+:: 早期版本的旧配置文件名称转换
+if exist ConfigProgress.txt ren ConfigProgress.txt progress.properties
+if exist config.txt ren config.txt config.properties
+
+:: 检测旧配置文件
+call :PropertiesReader progress.properties ConfigSet -disablewarn
+if "%ConfigSet%" equ "true" goto :ConfigTranslator
+
+:: 检测默认配置文件
+if not exist launcher.properties goto :ConfigCreater
+
+:: 读取配置文件
+call :Info 读取配置文件中
+call :PropertiesReader launcher.properties port-titl
+call :PropertiesReader launcher.properties auto-memory
+call :PropertiesReader launcher.properties default-xmx
+call :PropertiesReader launcher.properties default-xms
+call :PropertiesReader launcher.properties auto-restart
+call :PropertiesReader launcher.properties restart-wait
+call :PropertiesReader launcher.properties extra-server -keepspace -disablewarn
+call :PropertiesReader launcher.properties extra-java -keepspace -disablewarn
+call :PropertiesReader launcher.properties java-path -keepspace -disablewarn
+call :Info 读取完毕！
+goto exit
+
+
+
+:: 配置文件创建
+:ConfigCreater
+call :info 将创建一个新的配置文件,按任意键以继续
+pause >nul
+set port-titl=true 
+set auto-memory=true 
+set default-xmx=4096 
+set default-xms=4096 
+set auto-restart=true 
+set restart-wait=10 
+set extra-server=nogui 
+set extra-java=--add-modules=jdk.incubator.vector 
+.\Java\bin\java.exe -version >nul 2>&1
+if %errorlevel% equ 0 ( set java-path=.\Java\bin\java.exe ) else ( set java-path=java )
+call :SaveConfig
+call :Info 创建完毕！
+goto exit
+
+
+
+:: 旧版配置文件转换
+:ConfigTranslator
+if not exist config.properties call :Warning 未找到正确的旧配置文件 && goto ConfigCreater
+call :info 正在转换旧版配置文件
+if exist launcher.properties call :Warning 检测到launcher.properties已存在，将覆盖原配置文件，按任意键以继续 && pause >nul
+
+:: 由于现在不会在开服前等待,将忽略EarlyLunchWait
+:: ServerGUI将转换为extra-server直接添加-nogui参数
+:: EarlyLunchWait,SysMem和LogAutoRemove被废弃,但为保留兼容仍做转换
+:: 配置映射列表:
+:: AutoMemSet -> auto-memory
+:: UserRam -> default-xmx
+:: MinMem -> default-xms
+:: AutoRestart -> auto-restart
+:: RestartWait -> restart-wait
+:: ServerGUI -> extra-server
+:: SysMem -> old.system-memory
+:: LogAutoRemove -> old.auto-remove-log
+:: EarlyLunchWait -> old.launch-wait
+
+call :PropertiesReader config.properties AutoMemSet -disablewarn
+call :PropertiesReader config.properties UserRam -disablewarn
+call :PropertiesReader config.properties MinMem -disablewarn
+call :PropertiesReader config.properties AutoRestart -disablewarn
+call :PropertiesReader config.properties RestartWait -disablewarn
+call :PropertiesReader config.properties ServerGUI -disablewarn
+call :PropertiesReader config.properties SysMem -disablewarn
+call :PropertiesReader config.properties LogAutoRemove -disablewarn
+call :PropertiesReader config.properties EarlyLunchWait -disablewarn
+
+set port-titl=true
+set auto-memory=%AutoMemSet%
+if "%UserRam%" equ "" set UserRam=4096
+set default-xmx=%UserRam%
+if "%MinMem%" equ "" set MinMem=128
+set default-xms=%MinMem%
+set auto-restart=%AutoRestart%
+set restart-wait=%RestartWait%
+if "%ServerGUI%" equ "false" set extra-server=nogui 
+set extra-java=--add-modules=jdk.incubator.vector
+.\Java\bin\java.exe -version >nul 2>&1
+if %errorlevel% equ 0 ( set java-path=.\Java\bin\java.exe ) else ( set java-path=java )
+set old.system-memory=%SysMem%
+set old.auto-remove-log=%LogAutoRemove%
+set old.launch-wait=%EarlyLunchWait%
+
+call :SaveConfig true
+
+del progress.properties /f/q
+del config.properties /f/q
+
+call :Info 转换完毕！
+
+goto exit
+
+
+
+:: 保存配置文件
+:SaveConfig
+echo # 任渊生存服务端启动器配置文件 >launcher.properties
+echo. >>launcher.properties
+echo # 是否在标题显示服务器端口 >>launcher.properties
+echo port-titl=%port-titl% >>launcher.properties
+echo. >>launcher.properties
+echo # 是否自动设置内存 >>launcher.properties
+echo auto-memory=%auto-memory% >>launcher.properties
+echo. >>launcher.properties
+echo # 最小内存和最大内存,如开启自动设置内存,此项不生效 >>launcher.properties
+echo default-xmx=%default-xmx% >>launcher.properties
+echo default-xms=%default-xms% >>launcher.properties
+echo. >>launcher.properties
+echo # 是否自动重启 >>launcher.properties
+echo auto-restart=%auto-restart% >>launcher.properties
+echo # 自动重启时的等待时间 >>launcher.properties
+echo restart-wait=%restart-wait% >>launcher.properties
+echo. >>launcher.properties
+echo # 服务器参数 >>launcher.properties
+echo extra-server=%extra-server% >>launcher.properties
+echo # JVM参数 >>launcher.properties
+echo extra-java=%extra-java% >>launcher.properties
+echo # Java路径 >>launcher.properties
+echo java-path=%java-path% >>launcher.properties
+echo. >>launcher.properties
+if "%~1" neq "true" goto exit
+echo # 旧版本配置文件废弃参数 >>launcher.properties
+echo old.system-memory=%old.system-memory% >> launcher.properties
+echo old.auto-remove-log=%old.auto-remove-log% >> launcher.properties
+echo old.launch-wait=%old.launch-wait% >> launcher.properties
+goto exit
+
+:DisplayConfig
+call :Info %line%
+call :Info 在标题显示端口: %port-titl%
+call :Info 自动分配内存: %auto-memory%
+call :Info 最大内存: %default-xmx%
+call :Info 最小内存: %default-xms%
+call :Info 自动重启: %auto-restart%
+call :Info 重启等待时间: %restart-wait%
+call :Info 服务器参数: %extra-server%
+call :Info JVM参数: %extra-java%
+call :Info Java路径: %java-path%
+call :Info %line%
+
+goto exit
+
+
+:: 退出标识,请不要在此下方添加代码
+:exit
