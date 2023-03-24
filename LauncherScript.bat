@@ -21,6 +21,8 @@ set startup-command=
 set /a times=0
 if "%port-titl%" equ "true" set titl-port=端口: %server-port%
 
+
+
 :Loop
 call :RefreshMemory
 cls
@@ -73,6 +75,9 @@ call :PropertiesReader version.properties core -disablewarn
 call :PropertiesReader version.properties name
 call :PropertiesReader version.properties git
 if "%core%" equ "" call :Error 核心名称参数丢失，将使用默认的核心名称server.jar & set core=server.jar
+call :Info %line%
+call :Info 任渊生存服务端 %version% [git-%git%]
+call :Info %line%
 goto exit
 
 
