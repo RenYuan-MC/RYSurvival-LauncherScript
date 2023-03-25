@@ -268,6 +268,8 @@ echo old.auto-remove-log=%old.auto-remove-log% >> launcher.properties
 echo old.launch-wait=%old.launch-wait% >> launcher.properties
 goto exit
 
+
+
 :DisplayConfig
 call :Info %line%
 call :Info 在标题显示端口: %port-titl%
@@ -330,6 +332,9 @@ if "%times%" neq "0" (
 set times=
 goto exit
 
+
+
+
 :: 刷新标题
 :RefreshTitle
 if "%auto-restart%" equ "true" (
@@ -338,6 +343,9 @@ if "%auto-restart%" equ "true" (
     title %titl% %name% %titl-port%
 )
 goto exit
+
+
+
 
 :: 刷新内存分配
 :RefreshMemory
@@ -366,6 +374,9 @@ call :Info %line%
 ping -n 2 -w 500 127.0.0.1 >nul 
 
 goto exit
+
+
+
 
 :: 退出标识,请不要在此下方添加代码
 :exit
