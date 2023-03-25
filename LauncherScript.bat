@@ -18,7 +18,6 @@ call :DisplayConfig
 call :EulaChecker
 call :PortChecker
 
-set startup-command=
 set /a times=0
 if "%port-titl%" equ "true" set titl-port=¶Ë¿Ú: %server-port%
 
