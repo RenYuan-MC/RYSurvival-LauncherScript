@@ -27,8 +27,9 @@ if "%port-titl%" equ "true" set titl-port=端口: %server-port%
 call :RefreshMemory
 cls
 call :RefreshTitle
+call :RefreshFlags
 
-%java-path% -Xmx%xmx%M -Xms%xms%M %extra-java% -jar %core% %extra-server%
+%java-path% -Xmx%xmx%M -Xms%xms%M %flags% %extra-java% -jar %core% %extra-server%
 
 echo.
 call :Info %line%
@@ -145,6 +146,7 @@ if not exist launcher.properties call :ConfigCreater
 :: 读取配置文件
 call :Info 读取配置文件中
 call :PropertiesReader launcher.properties port-titl
+call :PropertiesReader launcher.properties etil-flags
 call :PropertiesReader launcher.properties auto-memory
 call :PropertiesReader launcher.properties default-xmx
 call :PropertiesReader launcher.properties default-xms
@@ -162,14 +164,14 @@ goto exit
 :ConfigCreater
 call :info 将创建一个新的配置文件,按任意键以继续
 pause >nul
-set port-titl=true 
+set port-titl=true
+set etil-flags=true
 set auto-memory=true 
 set default-xmx=4096 
 set default-xms=4096 
 set auto-restart=true 
 set restart-wait=10 
 set extra-server=nogui 
-set extra-java=--add-modules=jdk.incubator.vector 
 .\Java\bin\java.exe -version >nul 2>&1
 if %errorlevel% equ 0 ( set java-path=.\Java\bin\java.exe ) else ( set java-path=java )
 call :SaveConfig
@@ -209,6 +211,7 @@ call :PropertiesReader config.properties LogAutoRemove -disablewarn
 call :PropertiesReader config.properties EarlyLunchWait -disablewarn
 
 set port-titl=true
+set etil-flags=true
 set auto-memory=%AutoMemSet%
 if "%UserRam%" equ "" set UserRam=4096
 set default-xmx=%UserRam%
@@ -217,7 +220,6 @@ set default-xms=%MinMem%
 set auto-restart=%AutoRestart%
 set restart-wait=%RestartWait%
 if "%ServerGUI%" equ "false" set extra-server=nogui 
-set extra-java=--add-modules=jdk.incubator.vector
 .\Java\bin\java.exe -version >nul 2>&1
 if %errorlevel% equ 0 ( set java-path=.\Java\bin\java.exe ) else ( set java-path=java )
 set old.system-memory=%SysMem%
@@ -241,6 +243,10 @@ echo # 任渊生存服务端启动器配置文件 >launcher.properties
 echo. >>launcher.properties
 echo # 是否在标题显示服务器端口 >>launcher.properties
 echo port-titl=%port-titl% >>launcher.properties
+echo. >>launcher.properties
+echo # 是否启用etil-flags >>launcher.properties
+echo # etil-flags基于Aikar-flags,可以小幅度提升性能 >>launcher.properties
+echo etil-flags=%etil-flags% >>launcher.properties
 echo. >>launcher.properties
 echo # 是否自动设置内存 >>launcher.properties
 echo auto-memory=%auto-memory% >>launcher.properties
@@ -273,6 +279,7 @@ goto exit
 :DisplayConfig
 call :Info %line%
 call :Info 在标题显示端口: %port-titl%
+call :Info 启用etil-flags: %etil-flags%
 call :Info 自动分配内存: %auto-memory%
 call :Info 最大内存: %default-xmx%
 call :Info 最小内存: %default-xms%
@@ -376,6 +383,17 @@ ping -n 2 -w 500 127.0.0.1 >nul
 goto exit
 
 
+:: 刷新etil-flags
+:RefreshFlags
+if "%etil-flags%" equ "false" goto exit
+
+if %xmx% lss 12288 (
+    set flags=-XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -XX:-UseBiasedLocking -XX:UseAVX=3 -XX:+UseStringDeduplication -XX:+UseFastUnorderedTimeStamps -XX:+UseAES -XX:+UseAESIntrinsics -XX:UseSSE=4 -XX:+UseFMA -XX:AllocatePrefetchStyle=1 -XX:+UseLoopPredicate -XX:+RangeCheckElimination -XX:+EliminateLocks -XX:+DoEscapeAnalysis -XX:+UseCodeCacheFlushing -XX:+SegmentedCodeCache -XX:+UseFastJNIAccessors -XX:+OptimizeStringConcat -XX:+UseCompressedOops -XX:+UseThreadPriorities -XX:+OmitStackTraceInFastThrow -XX:+TrustFinalNonStaticFields -XX:ThreadPriorityPolicy=1 -XX:+UseInlineCaches -XX:+RewriteBytecodes -XX:+RewriteFrequentPairs -XX:+UseNUMA -XX:-DontCompileHugeMethods -XX:+UseFPUForSpilling -XX:+UseFastStosb -XX:+UseNewLongLShift -XX:+UseVectorCmov -XX:+UseXMMForArrayCopy -XX:+UseXmmI2D -XX:+UseXmmI2F -XX:+UseXmmLoadAndClearUpper -XX:+UseXmmRegToRegMoveAll -Dfile.encoding=UTF-8 -Xlog:async -Djava.security.egd=file:/dev/urandom --add-modules=jdk.incubator.vector
+) else (
+    set flags=-XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+UnlockDiagnosticVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=40 -XX:G1MaxNewSizePercent=50 -XX:G1HeapRegionSize=16M -XX:G1ReservePercent=15 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=20 -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -XX:-UseBiasedLocking -XX:UseAVX=3 -XX:+UseStringDeduplication -XX:+UseFastUnorderedTimeStamps -XX:+UseAES -XX:+UseAESIntrinsics -XX:UseSSE=4 -XX:+UseFMA -XX:AllocatePrefetchStyle=1 -XX:+UseLoopPredicate -XX:+RangeCheckElimination -XX:+EliminateLocks -XX:+DoEscapeAnalysis -XX:+UseCodeCacheFlushing -XX:+SegmentedCodeCache -XX:+UseFastJNIAccessors -XX:+OptimizeStringConcat -XX:+UseCompressedOops -XX:+UseThreadPriorities -XX:+OmitStackTraceInFastThrow -XX:+TrustFinalNonStaticFields -XX:ThreadPriorityPolicy=1 -XX:+UseInlineCaches -XX:+RewriteBytecodes -XX:+RewriteFrequentPairs -XX:+UseNUMA -XX:-DontCompileHugeMethods -XX:+UseFPUForSpilling -XX:+UseFastStosb -XX:+UseNewLongLShift -XX:+UseVectorCmov -XX:+UseXMMForArrayCopy -XX:+UseXmmI2D -XX:+UseXmmI2F -XX:+UseXmmLoadAndClearUpper -XX:+UseXmmRegToRegMoveAll -Dfile.encoding=UTF-8 -Xlog:async -Djava.security.egd=file:/dev/urandom --add-modules=jdk.incubator.vector
+)
+
+goto exit
 
 
 :: 退出标识,请不要在此下方添加代码
