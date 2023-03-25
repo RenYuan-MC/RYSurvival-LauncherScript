@@ -2,13 +2,14 @@
 cd /d "%~dp0"
 cls
 
+setlocal EnableDelayedExpansion
+
 call :info 请稍后,初始化中...
 set line=----------------------------------
 set titl=任渊生存
 title %titl% 初始化中...
 
 :: 初始化彩色字体
-setlocal EnableDelayedExpansion
 for /f "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set "DEL=%%a"
 
 call :VersionReader
@@ -42,7 +43,7 @@ if "%auto-restart%" neq "true" (
 
 for /l %%a in (%restart-wait%,-1,1) do (
     call :Info 服务端将在%%a秒后重启
-    ping -n 2 -w 500 0.0.0.1>nul
+    ping -n 2 -w 500 127.0.0.1 >nul
 )
 
 call :Info 服务端重启中
@@ -112,8 +113,8 @@ goto exit
 
 :: properties文件读取
 :PropertiesReader
-if "%~3" equ "-keepspace" (set space=true) && if "%~4" equ "-keepspace" (set space=true)
-if "%~3" equ "-disablewarn" (set warn=false) && if "%~4" equ "-disablewarn" set (warn=false)
+if "%~3" equ "-keepspace" (set space=true) & if "%~4" equ "-keepspace" (set space=true)
+if "%~3" equ "-disablewarn" (set warn=false) & if "%~4" equ "-disablewarn" set (warn=false)
 if not exist %~1 ( if "%warn%" neq "false" call :Warn "未检测到文件 %~1 ！" ) & goto exit
 for /f "tokens=1,* delims==" %%a in ('findstr "%~2=" "%~1"') do set tag=%%b
 if "%tag%" equ "" ( if "%warn%" neq "false" call :Warn "无法获取到 %~1 的 %~2 参数！" ) & goto exit
@@ -180,9 +181,9 @@ goto exit
 
 :: 旧版配置文件转换
 :ConfigTranslator
-if not exist config.properties call :Warn 未找到正确的旧配置文件 && goto ConfigCreater
+if not exist config.properties call :Warn 未找到正确的旧配置文件 & goto ConfigCreater
 call :info 正在转换旧版配置文件
-if exist launcher.properties call :Warn 检测到launcher.properties已存在，将覆盖原配置文件，按任意键以继续 && pause >nul
+if exist launcher.properties call :Warn 检测到launcher.properties已存在，将覆盖原配置文件，按任意键以继续 & pause >nul
 
 :: 由于现在不会在开服前等待,将忽略EarlyLunchWait
 :: ServerGUI将转换为extra-server直接添加-nogui参数
@@ -293,11 +294,11 @@ call :Warn "在服务端正式运行前，你还要同意Minecraft EULA"
 call :Info 查看EULA请前往 https://account.mojang.com/documents/minecraft_eula
 call :Info 在此处按任意键表示同意Minecraft EULA并启动服务端
 
-pause>nul
-echo eula=true>eula.txt
+pause >nul
+echo eula=true >eula.txt
 call :Info 你同意了Minecraft EULA,服务端即将启动
 call :Info %line%
-ping -n 2 -w 500 0.0.0.1>nul
+ping -n 2 -w 500 127.0.0.1 >nul
 
 goto exit
 
@@ -313,7 +314,7 @@ if "%server-port%" equ "" (
 :: 查找占用端口的程序
 set /a times=0 
 for /f "tokens=2,5" %%i in (' netstat -ano ^| findstr "%server-port%" ') do (
-    for /f %%a in ('echo %%i ^| findstr "%server-port%"') do ( 
+    for /f %%a in (' echo %%i ^| findstr "%server-port%" ') do ( 
         if "!times!" equ "0" (
             call :Warn 服务器端口可能被占用，将会导致服务器无法正常开启！
             call :Info 以下是占用端口的进程PID和对应端口IP:
