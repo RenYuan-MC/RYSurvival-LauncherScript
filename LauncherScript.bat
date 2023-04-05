@@ -24,10 +24,12 @@ if "%port-titl%" equ "true" set titl-port=¶Ë¿Ú: %server-port%
 
 
 :Loop
+
 call :RefreshMemory
-cls
 call :RefreshTitle
 call :RefreshFlags
+
+cls
 
 %java-path% -Xmx%xmx%M -Xms%xms%M %flags% %extra-java% -jar %core% %extra-server%
 
