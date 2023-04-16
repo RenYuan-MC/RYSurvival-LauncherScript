@@ -323,13 +323,13 @@ if "%server-port%" equ "" (
 
 :: 查找占用端口的程序
 set /a times=0 
-for /f "tokens=2,5" %%i in (' netstat -ano ^| findstr "%server-port%" ') do (
-    for /f %%a in (' echo %%i ^| findstr "%server-port%" ') do ( 
+for /f "tokens=1,2,5" %%i in (' netstat -ano ^| findstr "%server-port%" ') do (
+    if "%%i" equ "TCP" for /f %%a in (' echo %%j ^| findstr "%server-port%" ') do ( 
         if "!times!" equ "0" (
             call :Warn 服务器端口可能被占用，将会导致服务器无法正常开启！
             call :Info 以下是占用端口的进程PID和对应端口IP:
         )
-        call :Info 进程PID: %%j ,占用端口IP: %%a
+        call :Info 进程PID: %%k ,占用端口IP: %%a
         set /a times+=1
     )
 )
