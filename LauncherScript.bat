@@ -305,7 +305,7 @@ call :Info 查看EULA请前往 https://account.mojang.com/documents/minecraft_eula
 call :Info 在此处按任意键表示同意Minecraft EULA并启动服务端
 
 pause >nul
-echo eula=true >eula.txt
+echo eula=true>eula.txt
 call :Info 你同意了Minecraft EULA,服务端即将启动
 call :Info %line%
 ping -n 2 -w 500 127.0.0.1 >nul
