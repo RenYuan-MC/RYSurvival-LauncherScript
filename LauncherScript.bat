@@ -198,9 +198,9 @@ if exist launcher.properties call :Warn ¼ì²âµ½launcher.propertiesÒÑ´æÔÚ£¬½«¸²¸ÇÔ
 :: AutoRestart -> auto-restart
 :: RestartWait -> restart-wait
 :: ServerGUI -> extra-server
-:: SysMem -> old.system-memory
-:: LogAutoRemove -> old.auto-remove-log
-:: EarlyLunchWait -> old.launch-wait
+:: SysMem -> old_system-memory
+:: LogAutoRemove -> old_auto-remove-log
+:: EarlyLunchWait -> old_launch-wait
 
 call :PropertiesReader config.properties AutoMemSet -disablewarn
 call :PropertiesReader config.properties UserRam -disablewarn
@@ -224,9 +224,9 @@ set restart-wait=%RestartWait%
 if "%ServerGUI%" equ "false" set extra-server=nogui 
 .\Java\bin\java.exe -version >nul 2>&1
 if %errorlevel% equ 0 ( set java-path=.\Java\bin\java.exe ) else ( set java-path=java )
-set old.system-memory=%SysMem%
-set old.auto-remove-log=%LogAutoRemove%
-set old.launch-wait=%EarlyLunchWait%
+set old_system-memory=%SysMem%
+set old_auto-remove-log=%LogAutoRemove%
+set old_launch-wait=%EarlyLunchWait%
 
 call :SaveConfig true
 
@@ -271,9 +271,9 @@ echo java-path=%java-path% >>launcher.properties
 echo. >>launcher.properties
 if "%~1" neq "true" goto exit
 echo # ¾É°æ±¾ÅäÖÃÎÄ¼þ·ÏÆú²ÎÊý >>launcher.properties
-echo old.system-memory=%old.system-memory% >> launcher.properties
-echo old.auto-remove-log=%old.auto-remove-log% >> launcher.properties
-echo old.launch-wait=%old.launch-wait% >> launcher.properties
+echo old_system-memory=%old_system-memory% >> launcher.properties
+echo old_auto-remove-log=%old_auto-remove-log% >> launcher.properties
+echo old_launch-wait=%old_launch-wait% >> launcher.properties
 goto exit
 
 
