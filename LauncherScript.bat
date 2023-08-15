@@ -174,8 +174,8 @@ set default-xms=4096
 set auto-restart=true 
 set restart-wait=10 
 set extra-server=nogui 
-.\Java\bin\java.exe -version >nul 2>&1
-if %errorlevel% equ 0 ( set java-path=.\Java\bin\java.exe ) else ( set java-path=java )
+.\Java\bin\java -version >nul 2>&1
+if %errorlevel% equ 0 ( set java-path=.\Java\bin\java ) else ( set java-path=java )
 call :SaveConfig
 call :Info ´´½¨Íê±Ï£¡
 goto exit
@@ -222,8 +222,8 @@ set default-xms=%MinMem%
 set auto-restart=%AutoRestart%
 set restart-wait=%RestartWait%
 if "%ServerGUI%" equ "false" set extra-server=nogui 
-.\Java\bin\java.exe -version >nul 2>&1
-if %errorlevel% equ 0 ( set java-path=.\Java\bin\java.exe ) else ( set java-path=java )
+.\Java\bin\java -version >nul 2>&1
+if %errorlevel% equ 0 ( set java-path=.\Java\bin\java ) else ( set java-path=java )
 set old.system-memory=%SysMem%
 set old.auto-remove-log=%LogAutoRemove%
 set old.launch-wait=%EarlyLunchWait%
