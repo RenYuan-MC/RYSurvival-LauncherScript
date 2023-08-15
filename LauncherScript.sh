@@ -19,6 +19,12 @@ if [ "${port_titl}" == "true" ]; then
     titl_port="端口: ${server_port}"
 fi
 
+if [ "${java_path}" == "ry-default" ]; then
+    java_path_f=./java/linux/bin/java
+else
+    java_path_f=${java_path}
+fi
+
 loop
 
 }
@@ -30,7 +36,7 @@ loop() {
 
     clear
     
-    ${java_path} -Xmx${xmx}M -Xms${xms}M ${flags} ${extra_java} -jar ${core} ${extra_server}
+    ${java_path_f} -Xmx${xmx}M -Xms${xms}M ${flags} ${extra_java} -jar ${core} ${extra_server}
 
     echo ""
     info ${line}

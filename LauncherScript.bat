@@ -22,7 +22,8 @@ call :PortChecker
 set /a times=0
 if "%port-titl%" equ "true" set titl-port=¶Ë¿Ú: %server-port%
 
-
+set java-path-f=%java-path:/=\%
+if "%java-path-f%" equ "ry-default" set java-path-f=.\java\windows\bin\java
 
 :Loop
 
@@ -32,7 +33,7 @@ call :RefreshFlags
 
 cls
 
-%java-path:/=\% -Xmx%xmx%M -Xms%xms%M %flags% %extra-java% -jar %core% %extra-server%
+%java-path-f% -Xmx%xmx%M -Xms%xms%M %flags% %extra-java% -jar %core% %extra-server%
 
 echo.
 call :Info %line%
