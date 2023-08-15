@@ -1,4 +1,5 @@
 @echo off
+chcp 963
 cd /d "%~dp0"
 cls
 
