@@ -219,7 +219,7 @@ config_translator() {
         pause "\e[93m[Warn] 检测到launcher.properties已存在，将覆盖原配置文件，按任意键以继续: \e[0m"
     fi
 
-    # 由于现在不会在xms开服前等待,将忽略EarlyLunchWait
+    # 由于现在不会在开服前等待,将忽略EarlyLunchWait
     # ServerGUI将转换为extra-server直接添加-nogui参数
     # EarlyLunchWait,SysMem和LogAutoRemove被废弃,但为保留兼容仍做转换
     # 配置映射列表:
