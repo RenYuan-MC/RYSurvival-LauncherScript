@@ -31,7 +31,7 @@ call :RefreshFlags
 
 cls
 
-%java-path% -Xmx%xmx%M -Xms%xms%M %flags% %extra-java% -jar %core% %extra-server%
+%java-path:/=\% -Xmx%xmx%M -Xms%xms%M %flags% %extra-java% -jar %core% %extra-server%
 
 echo.
 call :Info %line%
@@ -175,7 +175,7 @@ set auto-restart=true
 set restart-wait=10 
 set extra-server=nogui 
 .\Java\bin\java -version >nul 2>&1
-if %errorlevel% equ 0 ( set java-path=.\Java\bin\java ) else ( set java-path=java )
+if %errorlevel% equ 0 ( set java-path=./Java/bin/java ) else ( set java-path=java )
 call :SaveConfig
 call :Info ´´½¨Íê±Ï£¡
 goto exit
@@ -223,7 +223,7 @@ set auto-restart=%AutoRestart%
 set restart-wait=%RestartWait%
 if "%ServerGUI%" equ "false" set extra-server=nogui 
 .\Java\bin\java -version >nul 2>&1
-if %errorlevel% equ 0 ( set java-path=.\Java\bin\java ) else ( set java-path=java )
+if %errorlevel% equ 0 ( set java-path=./Java/bin/java ) else ( set java-path=java )
 set old.system-memory=%SysMem%
 set old.auto-remove-log=%LogAutoRemove%
 set old.launch-wait=%EarlyLunchWait%
