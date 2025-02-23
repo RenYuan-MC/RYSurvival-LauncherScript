@@ -1,5 +1,5 @@
 @echo off
-chcp 963
+chcp 936
 cd /d "%~dp0"
 cls
 
@@ -11,7 +11,7 @@ set titl=任渊生存
 title %titl% 初始化中...
 
 :: 初始化彩色字体
-for /f "tokens=1,2 delims=#" %%a in ('"prompt #$H#$E# & echo on & for %%b in (1) do rem"') do set "DEL=%%a"
+for /f "tokens=1 delims=#" %%a in ('"prompt #$E# & echo on & for %%m in (1) do rem"') do set "ESC=%%a"
 
 call :VersionReader
 call :ConfigReader
@@ -92,25 +92,12 @@ goto exit
 echo [Info] %*
 goto exit
 
-
-
 :Warn
-call :colortext 0e "[Warn] %~1" & echo.
+echo %ESC%[93m[Warn] %* %ESC%[0m
 goto exit
-
-
 
 :Error
-call :colortext 0c "[Error] %~1" & echo.
-goto exit
-
-
-
-:: 输出彩色字体
-:ColorText
-<nul set /p ".=%DEL%" > "%~2"
-findstr /v /a:%1 /R "^$" "%~2" nul
-del "%~2" > nul 2>&1
+echo %ESC%[91m[Error] %* %ESC%[0m
 goto exit
 
 
